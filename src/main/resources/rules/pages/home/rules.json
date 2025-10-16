@@ -1,0 +1,28 @@
+{
+  "actions": [
+    {
+      "selector": "#block-whatsappicon a[href]",
+      "type": "setAttr",
+      "name": "href",
+      "value": "https://img.cdn1.vip/i/68f0c1a63ab94_1760608678.webp"
+    },
+    {
+      "selector": "#block-whatsappicon .text-white.mb-3",
+      "type": "setText",
+      "value": "微信联系"
+    },
+    {
+      "selector": "#block-whatsappicon img",
+      "type": "setAttr",
+      "name": "src",
+      "value": "/img/wechat-icon.svg"
+    },
+    {
+      "selector": "#block-whatsappicon img",
+      "type": "setAttr",
+      "name": "alt",
+      "value": "wechat-icon"
+    }
+  ]
+}
+
