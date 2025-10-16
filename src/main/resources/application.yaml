@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: websitelocalization
+
+mirror:
+  target_url: "https://www.nilai.edu.my"
+
+translation:
+  file-path:
+      - "/translation_cache_001.json"
+      - "/translation_cache_002.json"
+      - "/translation_cache_003.json"
+      - "/translation_cache_004.json"
+      - "/translation_cache_005.json"
+      - "/translation_cache_006.json"
