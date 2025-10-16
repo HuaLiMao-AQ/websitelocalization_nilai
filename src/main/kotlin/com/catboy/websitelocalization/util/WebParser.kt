@@ -126,32 +126,49 @@ class PageRuleExecutor {
     )
 
     fun applyRulesForPath(document: Document, requestPath: String) {
+        // 全局规则优先
+        readRuleSet("/rules/global/rules.json")?.actions?.forEach { action ->
+            applyAction(document, action)
+        }
+        // 页面规则
         val pageKey = resolvePageKey(requestPath)
-        val resourcePath = "/rules/pages/$pageKey/rules.json"
-        val resource = this::class.java.getResource(resourcePath) ?: return
+        readRuleSet("/rules/pages/$pageKey/rules.json")?.actions?.forEach { action ->
+            applyAction(document, action)
+        }
+    }
 
+    private fun readRuleSet(resourcePath: String): RuleSet? {
+        val resource = this::class.java.getResource(resourcePath) ?: return null
         val json = resource.readText(Charsets.UTF_8)
-        val ruleSet: RuleSet = mapper.readValue(json)
+        return mapper.readValue(json)
+    }
 
-        ruleSet.actions.forEach { action ->
-            val elements = document.select(action.selector)
-            when (action.type.lowercase()) {
-                "setattr" -> {
-                    val attrName = action.name ?: return@forEach
-                    val attrValue = action.value ?: return@forEach
-                    elements.forEach { el -> el.attr(attrName, attrValue) }
-                }
-                "settext" -> {
-                    val textValue = action.value ?: return@forEach
-                    elements.forEach { el -> el.text(textValue) }
-                }
-                "sethtml" -> {
-                    val htmlValue = action.value ?: return@forEach
-                    elements.forEach { el -> el.html(htmlValue) }
-                }
-                else -> {
-                    // 未知类型，忽略
-                }
+    private fun applyAction(document: Document, action: RuleAction) {
+        val elements = document.select(action.selector)
+        when (action.type.lowercase()) {
+            "setattr" -> {
+                val attrName = action.name ?: return
+                val attrValue = action.value ?: return
+                elements.forEach { el -> el.attr(attrName, attrValue) }
+            }
+            "settext" -> {
+                val textValue = action.value ?: return
+                elements.forEach { el -> el.text(textValue) }
+            }
+            "sethtml" -> {
+                val htmlValue = action.value ?: return
+                elements.forEach { el -> el.html(htmlValue) }
+            }
+            "prependhtml" -> {
+                val htmlValue = action.value ?: return
+                elements.forEach { el -> el.before(htmlValue) }
+            }
+            "appendhtml" -> {
+                val htmlValue = action.value ?: return
+                elements.forEach { el -> el.after(htmlValue) }
+            }
+            else -> {
+                // 未知类型，忽略
             }
         }
     }
