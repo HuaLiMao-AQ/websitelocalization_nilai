@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.toEntity
 import reactor.core.publisher.Mono
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import org.springframework.core.io.ClassPathResource
 
 /**
  * 镜像控制器
@@ -53,6 +54,27 @@ class MirrorController(
     ): Mono<ResponseEntity<Any>> {
         // 正确处理URL编码
         val decodedUri = URLDecoder.decode(request.requestURI, StandardCharsets.UTF_8)
+        // 优先返回本地静态资源
+        if (decodedUri.startsWith("/img/")) {
+            val resourcePath = "static$decodedUri"
+            val classPathResource = ClassPathResource(resourcePath)
+            if (classPathResource.exists()) {
+                val bytes = classPathResource.inputStream.use { it.readBytes() }
+                val resource = ByteArrayResource(bytes)
+                val contentType = when {
+                    decodedUri.endsWith(".svg", true) -> "image/svg+xml"
+                    decodedUri.endsWith(".png", true) -> "image/png"
+                    decodedUri.endsWith(".jpg", true) || decodedUri.endsWith(".jpeg", true) -> "image/jpeg"
+                    else -> MediaType.APPLICATION_OCTET_STREAM_VALUE
+                }
+                return Mono.just(
+                    ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE, contentType)
+                        .contentLength(bytes.size.toLong())
+                        .body(resource as Any)
+                )
+            }
+        }
         val targetUrl = "$targetHost$decodedUri" +
                 (if (request.queryString != null) "?${request.queryString}" else "")
         val cacheKey = generateCacheKey(request)
@@ -82,7 +104,8 @@ class MirrorController(
                     }
                     .bodyToMono(String::class.java)
                     .map { body ->
-                        val localization = webParser.localization(body)
+                        val requestPath = request.requestURI
+                        val localization = webParser.localization(body, requestPath)
                         cacheService.putCache(cacheKey, localization)
                         ResponseEntity.ok()
                             .contentType(MediaType.TEXT_HTML)

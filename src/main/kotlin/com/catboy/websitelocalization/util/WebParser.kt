@@ -12,11 +12,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
+import org.jsoup.nodes.Document
 
 @Component
 class WebParser(
     val translationProperties: TranslationProperties,
-    val environment: Environment
+    val environment: Environment,
+    private val pageRuleExecutor: PageRuleExecutor
 ) {
     // 日志记录器
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -75,7 +77,7 @@ class WebParser(
      * @param body 请求体
      * @return 翻译后的内容
      */
-    fun localization(body: String): String {
+    fun localization(body: String, requestPath: String): String {
         val doc = Jsoup.parse(body)
         doc.head().traverse { node, _ ->
             if (node is TextNode) {
@@ -96,6 +98,73 @@ class WebParser(
             }
         }
 
+        // 应用页面规则（按路径）
+        try {
+            pageRuleExecutor.applyRulesForPath(doc, requestPath)
+        } catch (ex: Exception) {
+            logger.warn("Apply page rules failed for path=$requestPath", ex)
+        }
+
         return doc.html()
+    }
+}
+
+// 规则执行扩展：按页面路径应用 DOM 修改
+@Component
+class PageRuleExecutor {
+    private val mapper = jacksonObjectMapper()
+
+    data class RuleAction(
+        val selector: String,
+        val type: String,
+        val name: String? = null,
+        val value: String? = null
+    )
+
+    data class RuleSet(
+        val actions: List<RuleAction> = emptyList()
+    )
+
+    fun applyRulesForPath(document: Document, requestPath: String) {
+        val pageKey = resolvePageKey(requestPath)
+        val resourcePath = "/rules/pages/$pageKey/rules.json"
+        val resource = this::class.java.getResource(resourcePath) ?: return
+
+        val json = resource.readText(Charsets.UTF_8)
+        val ruleSet: RuleSet = mapper.readValue(json)
+
+        ruleSet.actions.forEach { action ->
+            val elements = document.select(action.selector)
+            when (action.type.lowercase()) {
+                "setattr" -> {
+                    val attrName = action.name ?: return@forEach
+                    val attrValue = action.value ?: return@forEach
+                    elements.forEach { el -> el.attr(attrName, attrValue) }
+                }
+                "settext" -> {
+                    val textValue = action.value ?: return@forEach
+                    elements.forEach { el -> el.text(textValue) }
+                }
+                "sethtml" -> {
+                    val htmlValue = action.value ?: return@forEach
+                    elements.forEach { el -> el.html(htmlValue) }
+                }
+                else -> {
+                    // 未知类型，忽略
+                }
+            }
+        }
+    }
+
+    private fun resolvePageKey(requestPath: String): String {
+        val path = requestPath.ifBlank { "/" }
+        return when {
+            path == "/" || path == "/home" || path == "/node/1" -> "home"
+            else -> {
+                // 默认简单映射：/x 或 /x/... 映射为 pages/x/
+                val seg = path.trim().removePrefix("/").takeWhile { it != '/' }
+                seg.ifBlank { "home" }
+            }
+        }
     }
 }
