@@ -1,0 +1,37 @@
+{
+  "actions": [
+    {
+      "selector": "#img_list_427 .row > div:nth-of-type(4) .text",
+      "type": "prependHtml",
+      "value": "<div class=\"image mb-4\"><img src=\"/img/ZhaoJinyuan.jpg\" alt=\"Zhao Jinyuan\" class=\"img-fluid\"></div>"
+    },
+    {
+      "selector": "#img_list_427 .row > div:nth-of-type(4) .image img",
+      "type": "setAttr",
+      "name": "src",
+      "value": "/img/ZhaoJinyuan.jpg"
+    },
+    {
+      "selector": "#img_list_427 .row > div:nth-of-type(4) .image img",
+      "type": "setAttr",
+      "name": "alt",
+      "value": "Zhao Jinyuan"
+    },
+    {
+      "selector": "#img_list_427 .row > div:nth-of-type(4) .text .title",
+      "type": "setText",
+      "value": "赵进元"
+    },
+    {
+      "selector": "#img_list_427 .row > div:nth-of-type(4) .text .body",
+      "type": "setHtml",
+      "value": "<p>研究生院学术中心副主任<br>教育学、心理学硕士生导师</p>"
+    }
+    ,{
+      "selector": "#img_list_431 .row > div:has(.text .title:matchesOwn(卡维塔-阿鲁穆甘))",
+      "type": "appendHtml",
+      "value": "<div class=\"col-lg-3 col-md-4 col-sm-6 col-12 mb-4\"><div class=\"wrap d-flex flex-column h-100\"><div class=\"image mb-4\"><img src=\"/img/ZhaoJinyuan.jpg\" alt=\"Zhao Jinyuan\" class=\"img-fluid\"></div><div class=\"text\"><h3 class=\"title\">赵进元</h3><div class=\"body\"><p>研究生院学术中心副主任<br>教育学、心理学硕士生导师</p></div></div></div></div>"
+    }
+  ]
+}
+
