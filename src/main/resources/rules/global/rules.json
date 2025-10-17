@@ -4,7 +4,7 @@
             "selector": "#block-whatsappicon a[href]",
             "type": "setAttr",
             "name": "href",
-            "value": "https://img.cdn1.vip/i/68f0c1a63ab94_1760608678.webp"
+            "value": "/img/wechat-code.jpg"
         },
         {
             "selector": "#block-whatsappicon .text-white.mb-3",
